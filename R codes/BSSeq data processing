@@ -1,5 +1,5 @@
 
-# FUNCTION to extract regions, their coverage, count methylation, and %methylation
+#### FUNCTION to extract regions, their coverage, count methylation, and %methylation
 getting_regions_and_coverage <- function(cayo_meth){
   # define regions with Comethyl
   regions_oi <- getRegions(cayo_meth, maxGap = gap_region, n = min_cpg_region,
@@ -30,7 +30,7 @@ getting_regions_and_coverage <- function(cayo_meth){
 }
 
 
-# FUNCTION to obtain tissue-specific methylation data on regions
+#### FUNCTION to obtain tissue-specific methylation data on regions
 tissue_specific_methylation <-  function(matrix_list, tissue, metadata_sample, hypomethylated, hypermethylated, variance_meth) {
   # Extract 'lid_pid' values for the current tissue level
   tissue_lids <- metadata_sample$lid_pid[metadata_sample$grantparent_tissueType %in% tissue]
