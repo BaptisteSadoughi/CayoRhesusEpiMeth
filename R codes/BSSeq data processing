@@ -1,1 +1,72 @@
 
+# FUNCTION to extract regions, their coverage, count methylation, and %methylation
+getting_regions_and_coverage <- function(cayo_meth){
+  # define regions with Comethyl
+  regions_oi <- getRegions(cayo_meth, maxGap = gap_region, n = min_cpg_region,
+                           save = FALSE, verbose = FALSE)
+  # name regions
+  regions_oi$region_name <- paste(regions_oi$chr, regions_oi$start,
+                                  regions_oi$end, sep = "_")
+  
+  # when run in parallel, the automatically generated "Region_ID" are no longer unique because each chr restarts at Region_1, so I replace the Region_ID with the unique region_name
+  regions_oi$RegionID <- paste0("Region_",regions_oi$region_name)
+  
+  coverage_regions_oi <- bsseq::getCoverage(cayo_meth, type = "Cov", regions = regions_oi,
+                                            what="perRegionTotal", withDimnames = TRUE)
+  
+  rownames(coverage_regions_oi) <- regions_oi$RegionID
+  
+  methylation_regions_oi <- bsseq::getCoverage(cayo_meth, type = "M", regions = regions_oi,
+                                               what="perRegionTotal", withDimnames = TRUE)
+  
+  rownames(methylation_regions_oi) <- regions_oi$RegionID
+  
+  perc_meth <- methylation_regions_oi / coverage_regions_oi
+  
+  return_ <- list(regions_oi, coverage_regions_oi, methylation_regions_oi, perc_meth)
+  names(return_)=c("regions", "coverage", "methylation", "pmeth")
+  
+  return(return_)
+}
+
+
+# FUNCTION to obtain tissue-specific methylation data on regions
+tissue_specific_methylation <-  function(matrix_list, tissue, metadata_sample, hypomethylated, hypermethylated, variance_meth) {
+  # Extract 'lid_pid' values for the current tissue level
+  tissue_lids <- metadata_sample$lid_pid[metadata_sample$grantparent_tissueType %in% tissue]
+  
+  # Subset columns of the matrices based on 'lid' values
+  subset_result <- lapply(matrix_list[c("coverage","methylation","pmeth")], function(df){df[,colnames(df) %in% tissue_lids]})
+  
+  # isolate the percent methylation matrix
+  subset_pmeth <- subset_result$pmeth
+  # Remove hypo and hypermethylated regions for that tissue
+  subset_pmeth <- subset_pmeth[rowMeans(subset_pmeth, na.rm = TRUE) >= hypomethylated & rowMeans(subset_pmeth, na.rm = TRUE) <= hypermethylated,]
+  # Remove regions with low percent methylation variance
+  subset_pmeth <- subset_pmeth[rowSds(subset_pmeth, na.rm= TRUE, useNames=TRUE) >= variance_meth, , drop = FALSE]
+  
+  # isolate the coverage matrix
+  subset_cov <- subset_result$coverage
+  # Keep rows with full coverage
+  subset_cov <- subset_cov[complete.cases(subset_cov), ]
+  
+  # Unite filters on coverage and percent methylation
+  regions_tissue_ <- intersect(rownames(subset_cov), rownames(subset_pmeth))
+  
+  # Subset matrix_list elements to the lid_pids selected based on methylation and coverage filters
+  tissue_final <- lapply(matrix_list[c("coverage","methylation","pmeth")], function(df){df[rownames(df) %in% regions_tissue_,]})
+  tissue_final$regions <- matrix_list$regions[matrix_list$regions$RegionID %in% regions_tissue_,]
+  
+  # Calculate descriptive stats on the regions for that tissue
+  summary_regions <- lapply(tissue_final$regions[c("width","n","covMin","covMean","methMean",
+                                                   "methSD")], function(x) round(summary(x),2))
+  summary_regions <- data.frame(do.call(rbind, summary_regions))
+  summary_regions$parameter <- rownames(summary_regions)
+  tissue_final$summary_regions <- summary_regions
+  
+  # Name the subset_matrix with the corresponding tissue_oi
+  return(tissue_final)
+  
+}
+
+# N.B although the function tissue_specific_methylation creates separate objects for each entries in a list of tissues, a pan-tissue matrix can easily be obtained by applying the function with tissue = c(tissue_oi).
