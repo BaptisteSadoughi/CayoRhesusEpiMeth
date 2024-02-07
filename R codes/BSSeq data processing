@@ -1,6 +1,13 @@
+# Created 01/02/2024
+# Updated 07/02/2024 - the functions had several mistakes which I corrected thanks to Blaise Mariner. I also added a two-step version of getting_regions_and_coverage because this function fails when objects are too heavy even with parallelization.
+# 
 
-#### FUNCTION to extract regions, their coverage, count methylation, and %methylation
-getting_regions_and_coverage <- function(cayo_meth){
+# FUNCTION to extract regions, their coverage, count methylation, and %methylation
+getting_regions_and_coverage <- function(cayo_meth,
+                                         gap_region,
+                                         min_cpg_region,
+                                         at_least_X_coverage_of_a_region,
+                                         in_at_least_X_samples){
   # define regions with Comethyl
   regions_oi <- getRegions(cayo_meth, maxGap = gap_region, n = min_cpg_region,
                            save = FALSE, verbose = FALSE)
@@ -16,10 +23,16 @@ getting_regions_and_coverage <- function(cayo_meth){
   
   rownames(coverage_regions_oi) <- regions_oi$RegionID
   
+  coverage_regions_oi <- coverage_regions_oi[rowSums(coverage_regions_oi >= at_least_X_coverage_of_a_region) >= in_at_least_X_samples, ]
+  
   methylation_regions_oi <- bsseq::getCoverage(cayo_meth, type = "M", regions = regions_oi,
                                                what="perRegionTotal", withDimnames = TRUE)
   
   rownames(methylation_regions_oi) <- regions_oi$RegionID
+  
+  methylation_regions_oi <- methylation_regions_oi[rownames(methylation_regions_oi) %in% rownames(coverage_regions_oi),]
+  
+  regions_oi <- regions_oi[regions_oi$RegionID %in% rownames(methylation_regions_oi),]
   
   perc_meth <- methylation_regions_oi / coverage_regions_oi
   
@@ -30,8 +43,13 @@ getting_regions_and_coverage <- function(cayo_meth){
 }
 
 
-#### FUNCTION to obtain tissue-specific methylation data on regions
-tissue_specific_methylation <-  function(matrix_list, tissue, metadata_sample, hypomethylated, hypermethylated, variance_meth) {
+# FUNCTION to obtain tissue-specific methylation data on regions
+tissue_specific_methylation <-  function(matrix_list,
+                                         tissue,
+                                         metadata_sample,
+                                         hypomethylated,
+                                         hypermethylated,
+                                         variance_meth) {
   # Extract 'lid_pid' values for the current tissue level
   tissue_lids <- metadata_sample$lid_pid[metadata_sample$grantparent_tissueType %in% tissue]
   
@@ -56,13 +74,6 @@ tissue_specific_methylation <-  function(matrix_list, tissue, metadata_sample, h
   # Subset matrix_list elements to the lid_pids selected based on methylation and coverage filters
   tissue_final <- lapply(matrix_list[c("coverage","methylation","pmeth")], function(df){df[rownames(df) %in% regions_tissue_,]})
   tissue_final$regions <- matrix_list$regions[matrix_list$regions$RegionID %in% regions_tissue_,]
-  
-  # Calculate descriptive stats on the regions for that tissue
-  summary_regions <- lapply(tissue_final$regions[c("width","n","covMin","covMean","methMean",
-                                                   "methSD")], function(x) round(summary(x),2))
-  summary_regions <- data.frame(do.call(rbind, summary_regions))
-  summary_regions$parameter <- rownames(summary_regions)
-  tissue_final$summary_regions <- summary_regions
   
   # Name the subset_matrix with the corresponding tissue_oi
   return(tissue_final)
