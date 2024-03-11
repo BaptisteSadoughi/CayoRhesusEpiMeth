@@ -1,9 +1,10 @@
 ###### Created the 11/03/2024 by Baptiste Sadoughi
-###### This function takes two bsseq objects formatted into list of chromosomes elements as input.
+###### The function extract_common_cpgs takes two bsseq objects formatted into list of chromosomes elements as input.
 ###### It extracts their IRanges, turn them into GRangesList, finds the overlapping sites (at the CpG level in the current script), and returns two subsetted bbseq
 ###### objects.
 ###### Input variables are the two original bbseq objects, and the customed names for the two outputs.
 
+###### It comes with a small function bsseq_to_grl which extracts the GRangesList from the bsseq list.
 # Function to convert bsseq list to GRangesList
 bsseq_to_grl <- function(bsseq_list) {
   gr_list <- lapply(bsseq_list, function(bsseq) {
