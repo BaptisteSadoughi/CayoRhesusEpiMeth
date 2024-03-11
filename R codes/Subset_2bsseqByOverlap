@@ -17,7 +17,7 @@ bsseq_to_grl <- function(bsseq_list) {
   return(GRangesList(gr_list))
 }
 
-extract_common_cpgs <- function(bsseq_list_1, bsseq_list_2,bsseq_common_1_name = "bsseq_list_1_common", bsseq_common_2_name = "bsseq_list_2_common") {
+extract_common_cpgs <- function(bsseq_list_1, bsseq_list_2, bsseq_common_1_name = "bsseq_list_1_common", bsseq_common_2_name = "bsseq_list_2_common") {
   # Create GRangesList from bsseq_list_1
   bsseq_grl_1 <- bsseq_to_grl(bsseq_list_1)
   
@@ -62,5 +62,3 @@ extract_common_cpgs <- function(bsseq_list_1, bsseq_list_2,bsseq_common_1_name =
   assign(bsseq_common_1_name, bsseq_common_1, envir = .GlobalEnv)
   assign(bsseq_common_2_name, bsseq_common_2, envir = .GlobalEnv)
 }
-
-extract_common_cpgs(bsseq_list_1, bsseq_list_2, bsseq_common_1_name = "my_custom_bsseq_common_1", bsseq_common_2_name = "my_custom_bsseq_common_2")
