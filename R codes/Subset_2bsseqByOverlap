@@ -1,0 +1,65 @@
+###### Created the 11/03/2024 by Baptiste Sadoughi
+###### This function takes two bsseq objects formatted into list of chromosomes elements as input.
+###### It extracts their IRanges, turn them into GRangesList, finds the overlapping sites (at the CpG level in the current script), and returns two subsetted bbseq
+###### objects.
+###### Input variables are the two original bbseq objects, and the customed names for the two outputs.
+
+# Function to convert bsseq list to GRangesList
+bsseq_to_grl <- function(bsseq_list) {
+  gr_list <- lapply(bsseq_list, function(bsseq) {
+    chrom <- seqnames(bsseq)
+    start <- start(bsseq)
+    end <- end(bsseq)
+    gr <- GRanges(seqnames = chrom, ranges = IRanges(start = start, end = end))
+    return(gr)
+  })
+  return(GRangesList(gr_list))
+}
+
+extract_common_cpgs <- function(bsseq_list_1, bsseq_list_2,bsseq_common_1_name = "bsseq_list_1_common", bsseq_common_2_name = "bsseq_list_2_common") {
+  # Create GRangesList from bsseq_list_1
+  bsseq_grl_1 <- bsseq_to_grl(bsseq_list_1)
+  
+  # Create GRangesList from bsseq_list_2
+  bsseq_grl_2 <- bsseq_to_grl(bsseq_list_2)
+  
+  # Create an empty GRangesList to store common CpGs
+  common_cpg <- GRangesList()
+  
+  # Iterate through each chromosome and find the common CpG sites
+  for (chr in seq_along(bsseq_list_1)) {
+    # Find common CpG sites between bsseq_grl_1 and bsseq_grl_2 for the current chromosome
+    common_sites <- intersect(bsseq_grl_1[[chr]], bsseq_grl_2[[chr]])
+    
+    # Create a logical vector indicating which elements in bsseq_grl_1[[chr]] overlap with common_sites
+    overlap_logical <- findOverlaps(bsseq_grl_1[[chr]], common_sites)
+    # Extract the indices of overlapping ranges in bsseq_grl_1[[chr]]
+    overlap_indices <- queryHits(overlap_logical)
+    # Subset bsseq_grl_1[[chr]] based on the overlap_indices
+    subset_bsseq_1 <- bsseq_grl_1[[chr]][overlap_indices]
+    
+    # Assign Subsetted Ranges to common_cpg
+    common_cpg[[chr]] <- subset_bsseq_1
+  }
+  
+  # Finally subset the bsseq objects to keep common CpGs
+  # Initialize lists to store the bsseq objects
+  bsseq_common_1 <- list()
+  bsseq_common_2 <- list()
+  
+  # Iterate through each chromosome in common_cpg
+  for(chr in seq_along(bsseq_list_1)) {
+    # Get the common CpG sites
+    common_cpg_chr <- common_cpg[[chr]]
+    
+    # Subset the bsseq lists based on common CpG sites
+    bsseq_common_1[[chr]] <- subsetByOverlaps(bsseq_list_1[[chr]], common_cpg_chr)
+    bsseq_common_2[[chr]] <- subsetByOverlaps(bsseq_list_2[[chr]], common_cpg_chr)
+  }
+  
+  # Save the output lists as separate objects within the environment
+  assign(bsseq_common_1_name, bsseq_common_1, envir = .GlobalEnv)
+  assign(bsseq_common_2_name, bsseq_common_2, envir = .GlobalEnv)
+}
+
+extract_common_cpgs(bsseq_list_1, bsseq_list_2, bsseq_common_1_name = "my_custom_bsseq_common_1", bsseq_common_2_name = "my_custom_bsseq_common_2")
