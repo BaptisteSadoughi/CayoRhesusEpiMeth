@@ -1,5 +1,18 @@
 # umap plotting function adapted from https://cran.r-project.org/web/packages/umap/vignettes/umap.html
 
+# I save here the get_palette function which is necessary to set the number of fill according to the number of levels in metadata.
+# Function to generate a discrete color palette
+#get_palette <- function(n) {
+#  # Choose a suitable palette name and adjust the number of colors if necessary
+#  if (n <= 3) {
+#    return(brewer.pal(n, "Set1"))
+#  } else if (n <= 5) {
+#    return(brewer.pal(n, "Set2"))
+#  } else {
+#    return(brewer.pal(n, "Set3"))
+#  }
+#}
+
 plot.umap = function(x, metadata, fill, shape = NULL,
                      main="A UMAP visualization of the dataset",
                      pad=0.1, cex=0.6, add=FALSE, legend.suffix="",
