@@ -1,0 +1,44 @@
+## This function takes as input a bsseq object and a vector of chromosomes. It splits the bsseq per chromosome, filters for coverage of at least 50 samples, and removes hypo and hyper methylated sites.
+## x : a vector corresponding to seqnames of tissue_bsseq.
+## tissue_bsseq : bsseq object 
+
+split_and_filter <- function(x, tissue_bsseq){
+  chr <- chrSelectBSseq(tissue_bsseq, seqnames = x, order = TRUE)
+  
+  # Calculate the percentage based on the total number of columns
+  threshold_percentage <- in_at_least_X_samples / ncol(chr)
+  
+  # filter CpG sites so that they are at cov >=1 in >=50 samples
+  chr_filtered <- filterCpGs(chr, cov = 1, perSample = threshold_percentage, save = FALSE)
+  
+  # Add percent methylation matrix for filtering
+  chr_filtered@assays@data@listData[["pmeth"]]=getCoverage(chr_filtered,type="M")/getCoverage(chr_filtered,type="Cov")
+  
+  # Calculate row means for each row in pmeth
+  row_means <- rowMeans(chr_filtered@assays@data@listData[["pmeth"]], na.rm = TRUE)
+  
+  # Define a logical condition to filter rows based on HYPO and HYPER methylation
+  condition <- row_means >= hypomethylated & row_means <= hypermethylated
+  
+  # Filter bsseq object based on the condition
+  chr_filtered <- chr_filtered[which(condition),]
+  
+  # Calculate row SD for each row in pmeth
+  row_SD <- rowSds(chr_filtered@assays@data@listData[["pmeth"]], na.rm = TRUE, useNames = TRUE)
+
+  # Remove rows with low percent methylation variance
+  condition <- row_SD >= variance_meth
+  
+  # Filter bsseq object based on the condition
+  chr_filtered <- chr_filtered[which(condition),]
+  
+  # Remove rows with median cov <5
+  row_med <- MatrixGenerics::rowMedians(chr_filtered@assays@data@listData[["Cov"]], na.rm = TRUE, useNames = TRUE)
+  
+  condition <- row_med >= med_cov_filter
+  
+  # Filter bsseq object based on the condition
+  chr_filtered <- chr_filtered[which(condition),]
+  
+  return(chr_filtered)
+  }
