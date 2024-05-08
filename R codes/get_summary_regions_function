@@ -1,0 +1,20 @@
+# FUNCTION to calculate descriptive stats across the regions stats (i.e., overall summary)
+get_summary_regions <- function(x){
+  
+  # Apply summary function to each vector
+  summary_regions <- sapply(list(
+    "width" = x$regions$width,
+    "n" = x$regions$n,
+    "covMean" =  x$regions$covMean,
+    "covMin" =  x$regions$covMin,
+    "covSD" =  x$regions$covSD,
+    "methMean" =  x$regions$methMean,
+    "methSD" =  x$regions$methSD
+  ), summary)
+  summary_regions <- round(summary_regions, 2)
+  summary_regions <- as.data.frame(t(summary_regions))
+  summary_regions$parameter <- rownames(summary_regions)
+  
+  x$summary_regions <- summary_regions 
+  return(x)
+}
