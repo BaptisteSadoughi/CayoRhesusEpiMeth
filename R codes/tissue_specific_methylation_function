@@ -1,0 +1,49 @@
+# FUNCTION to obtain tissue-specific methylation data on regions
+tissue_specific_methylation <- function(matrix_list, tissue, metadata_sample, in_at_least_X_samples, med_cov_filter, hypomethylated, hypermethylated, variance_meth) {
+  
+  # Extract 'lid_pid' values for the current tissue level
+  tissue_lids <- metadata_sample$lid_pid[metadata_sample$grantparent_tissueType %in% tissue]
+  
+  # Filter cov matrix based on tissue_lids
+  subset_cov <- matrix_list$coverage[, colnames(matrix_list$coverage) %in% tissue_lids]
+  
+  # Count number of samples with coverage per row
+  nonzero_counts <- rowSums(subset_cov !=0)
+  
+  # Calculate median coverage per row
+  row_median <- apply(subset_cov, 1, median)
+  
+  # Filter to keep rows with coverage in >=50 samples AND median coverage >=5
+  rows_to_keep <- nonzero_counts >= in_at_least_X_samples & row_median >= med_cov_filter
+  
+  subset_cov <- subset_cov[rows_to_keep, ]
+
+  # Filter pmeth matrix based on tissue_lids
+  # subset_pmeth <- matrix_list$pmeth[, colnames(matrix_list$pmeth) %in% tissue_lids]
+  subset_pmeth <- matrix_list$pmeth[rownames(subset_cov),colnames(subset_cov)]
+  
+  # Remove hypo and hypermethylated regions for that tissue
+  subset_pmeth <- subset_pmeth[rowMeans(subset_pmeth, na.rm = TRUE) >= hypomethylated &
+                                 rowMeans(subset_pmeth, na.rm = TRUE) <= hypermethylated, ]
+
+  # Remove regions with low percent methylation variance
+  subset_pmeth <- subset_pmeth[rowSds(subset_pmeth, na.rm = TRUE, useNames = TRUE) >= variance_meth, , drop = FALSE]
+  
+  # Get row names and column names after filtering pmeth
+  rows_pmeth <- rownames(subset_pmeth)
+  cols_pmeth <- colnames(subset_pmeth)
+  
+  # Filter coverage and methylation matrices based on pmeth
+  subset_result <- lapply(matrix_list[c("coverage", "methylation")], function(df) {
+    df[rows_pmeth, cols_pmeth, drop = FALSE]
+  })
+  
+  # Now subset the regions based on pmeth row names
+  regions <- matrix_list$regions[matrix_list$regions$RegionID %in% rows_pmeth, ]
+  
+  # Return the filtered data
+  return(list(coverage = subset_result$coverage, 
+              methylation = subset_result$methylation, 
+              pmeth = subset_pmeth, 
+              regions = regions))
+}
