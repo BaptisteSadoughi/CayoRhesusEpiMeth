@@ -1,0 +1,28 @@
+# FUNCTION to calculate descriptive statistics on the regions
+amend_regions <- function(x){
+  # Calculate width
+  x$regions$width <- x$regions$end - x$regions$start +1
+  
+  # Calculate covMean (Mean coverage for each row)
+  covMean <- rowMeans(x$coverage, na.rm = TRUE)
+  
+  # Calculate covMin (Minimum coverage for each row)
+  covMin <- apply(x$coverage, 1, min, na.rm = TRUE)
+  
+  # Calculate covSD (Standard deviation of coverage for each row)
+  covSD <- apply(x$coverage, 1, sd, na.rm = TRUE)
+  
+  # Calculate methMean (Mean %methylation for each row)
+  methMean <- rowMeans(x$pmeth, na.rm = TRUE)
+  
+  # Calculate methSD (Standard deviation of %methylation for each row)
+  methSD <- apply(x$pmeth, 1, sd, na.rm = TRUE)
+  
+  x$regions$covMean <- covMean
+  x$regions$covMin <- covMin
+  x$regions$covSD <- covSD
+  x$regions$methMean <- methMean
+  x$regions$methSD <- methSD
+  
+  return(x)
+}
