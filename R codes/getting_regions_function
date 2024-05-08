@@ -1,0 +1,25 @@
+
+# FUNCTION to extract regions
+getting_regions <- function(cayo_meth,
+                            gap_region,
+                            min_cpg_region){
+  # # define regions with Comethyl
+  # regions_oi <- getRegions(cayo_meth, maxGap = gap_region, n = min_cpg_region,
+  #                          save = FALSE, verbose = FALSE)
+  
+  # define regions with regionFinder3
+  regions_oi <- bsseq:::regionFinder3(x = as.integer(rep(1,length(cayo_meth))),
+                                      chr = as.character(GenomeInfoDb::seqnames(cayo_meth)),
+                                      positions = BiocGenerics::start(cayo_meth), maxGap = gap_region, verbose = FALSE)[["up"]]
+  
+  # keep regions with a minimum of CpG
+  regions_oi <- regions_oi[regions_oi$n >= min_cpg_region,]
+  
+  # name regions
+  regions_oi$region_name <- paste(regions_oi$chr, regions_oi$start,
+                                  regions_oi$end, sep = "_")
+  
+  # when run in parallel, the automatically generated "Region_ID" are no longer unique because each chr restarts at Region_1, so I replace the Region_ID with the unique region_name
+  regions_oi$RegionID <- paste0("Region_",regions_oi$region_name)
+  return(regions_oi)
+}
