@@ -1,0 +1,39 @@
+# FUNCTION to compute correlation at matched CpG sites in matched samples
+compute_bbseq_corr_per_col <- function(bsseq1, bsseq2, columns = NULL) {
+  # If columns are not specified, consider all columns
+  if (is.null(columns)) {
+    columns <- 1:ncol(bsseq1[[1]]@assays@data@listData[["pmeth"]])
+  }
+  
+  # Initialize vector to store correlation coefficients
+  correlations <- numeric(length(columns))
+  
+  # Iterate over each specified column and compute correlation
+  for (i in seq_along(columns)) {
+    col_index <- columns[i]
+    
+    # Initialize vectors to store non-NA values for each bsseq
+    non_na_bsseq1 <- c()
+    non_na_bsseq2 <- c()
+    
+    # Loop through each element of the list
+    for (j in 1:length(bsseq1)) {
+      # Find non-NA values for the current row pair in each element of the list
+      non_na_indices <- complete.cases(bsseq1[[j]]@assays@data@listData[["pmeth"]][, col_index],
+                                       bsseq2[[j]]@assays@data@listData[["pmeth"]][, col_index])
+      if (any(non_na_indices)) {
+        non_na_bsseq1 <- c(non_na_bsseq1, bsseq1[[j]]@assays@data@listData[["pmeth"]][non_na_indices, col_index])
+        non_na_bsseq2 <- c(non_na_bsseq2, bsseq2[[j]]@assays@data@listData[["pmeth"]][non_na_indices, col_index])
+      }
+    }
+    
+    # Compute correlation if there are at least 2 non-NA values
+    if (length(non_na_bsseq1) >= 2) {
+      correlations[i] <- cor(non_na_bsseq1, non_na_bsseq2)
+    } else {
+      correlations[i] <- NA
+    }
+  }
+  
+  return(correlations)
+}
