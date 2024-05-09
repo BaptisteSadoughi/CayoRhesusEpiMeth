@@ -1,0 +1,11 @@
+# FUNCTION to convert bsseq list to GRangesList
+bsseq_to_grl <- function(bsseq_list) {
+  gr_list <- lapply(bsseq_list, function(bsseq) {
+    chrom <- seqnames(bsseq)
+    start <- start(bsseq)
+    end <- end(bsseq)
+    gr <- GRanges(seqnames = chrom, ranges = IRanges(start = start, end = end))
+    return(gr)
+  })
+  return(GRangesList(gr_list))
+}
