@@ -14,9 +14,11 @@ get_palette <- function(n) {
 }
 
 plot.umap = function(x, metadata, fill, shape = NULL,
+                     mainTitle=TRUE,
                      main="A UMAP visualization of the dataset",
-                     pad=0.1, cex=0.6, add=FALSE, legend.suffix="",
-                     cex.main=1, cex.legend=0.85, box = TRUE) {
+                     pad=0.1, cex.point=0.6, add=FALSE, legend.suffix="",
+                     cex.main=1, cex.legend=0.85, cex.axisTitle=1, cex.axisText=1,
+                     box = TRUE) {
   layout <- x
   if (is(x, "umap")) {
     layout <- x$layout
@@ -25,7 +27,10 @@ plot.umap = function(x, metadata, fill, shape = NULL,
   xylim <- xylim + ((xylim[2]-xylim[1])*pad)*c(-0.5, 0.5)
   if (!add) {
     par(mar=c(5, 5, 4, 2) + 0.1)  # Adjust the margins for the axes
-    plot(xylim, xylim, type="n", frame=F, xlab="UMAP1", ylab="UMAP2") 
+    plot(xylim, xylim, type="n", frame=F, xlab="UMAP1", ylab="UMAP2",cex.lab=cex.axisTitle, cex.axis=cex.axisText) 
+    if (mainTitle) {
+      title(main="Your Main Title") #Add main title if main=TRUE
+    }
     if (box) {
       box()  # Add a box around the plot
     }
@@ -63,7 +68,7 @@ plot.umap = function(x, metadata, fill, shape = NULL,
   
   # set datapoints
   points(layout[,1], layout[,2], col=NA,
-         pch=pch_vector, bg=point_fill_color, cex=cex)
+         pch=pch_vector, bg=point_fill_color, cex=cex.point)
   
   # add the legend for fill
   if (!add) {
@@ -90,8 +95,10 @@ plot.umap = function(x, metadata, fill, shape = NULL,
   if (!is.null(shape)) {
     shapes <- unique(metadata[[shape]])
     legend("left", legend = as.character(shapes), pch = shape_pch,
-           bty = "n", pt.cex = cex, cex = cex.legend)
+           bty = "n", pt.cex = cex.point, cex = cex.legend)
   }
   # add main title
+  if(mainTitle){
   mtext(side=3, main, cex=cex.main)
+  }
 }
