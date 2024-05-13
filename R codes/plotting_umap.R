@@ -18,7 +18,7 @@ plot.umap = function(x, metadata, fill, shape = NULL,
                      main="A UMAP visualization of the dataset",
                      pad=0.1, cex.point=0.6, add=FALSE, legend.suffix="",
                      cex.main=1, cex.legend=0.85, cex.axisTitle=1, cex.axisText=1,
-                     legend.pos = "topleft", box = TRUE) {
+                     legendfill.pos = "topleft", legendshape.pos="left", box = TRUE) {
   layout <- x
   if (is(x, "umap")) {
     layout <- x$layout
@@ -85,15 +85,15 @@ plot.umap = function(x, metadata, fill, shape = NULL,
       legend.pos <- "bottomleft"
       legend.text <- paste(as.character(labels.u), legend.suffix)
     }
-    legend(legend.pos, legend=legend.text, inset=0.03,
-           col=NA,
+    legend(legendfill.pos, legend=legend.text, inset=0.03,
+           col=NA, pt.cex = cex.point,
            pch=21, cex=cex.legend, pt.bg=fills.u, bty="n")
   }
   
   # add the legend for shape
   if (!is.null(shape)) {
     shapes <- unique(metadata[[shape]])
-    legend("left", legend = as.character(shapes), pch = shape_pch,
+    legend(legendshape.pos, legend = as.character(shapes), pch = shape_pch,
            bty = "n", pt.cex = cex.point, cex = cex.legend)
   }
   # add main title
