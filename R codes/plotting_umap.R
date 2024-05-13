@@ -18,7 +18,7 @@ plot.umap = function(x, metadata, fill, shape = NULL,
                      main="A UMAP visualization of the dataset",
                      pad=0.1, cex.point=0.6, add=FALSE, legend.suffix="",
                      cex.main=1, cex.legend=0.85, cex.axisTitle=1, cex.axisText=1,
-                     box = TRUE) {
+                     legend.pos = "topleft", box = TRUE) {
   layout <- x
   if (is(x, "umap")) {
     layout <- x$layout
@@ -72,7 +72,6 @@ plot.umap = function(x, metadata, fill, shape = NULL,
   
   # add the legend for fill
   if (!add) {
-    legend.pos <- "topleft"
     if (is_fill_discrete) {
       labels.u <- levels(fill_factor)
       fills.u <- fills
