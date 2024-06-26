@@ -13,7 +13,7 @@ get_palette <- function(n) {
   }
 }
 
-#' @x
+#' @x UMAP coordinates from umap(...)$layout 
 #' @metadata Dataframe containing the entry for fill and shape
 #' @fill Vector used to map the colour fill (continuous or categorical)
 #' @shape Vector used to map the shape (categorical with max 5 levels)
