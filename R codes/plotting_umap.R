@@ -93,7 +93,7 @@ plot.umap = function(x, metadata, fill, shape = NULL,
          pch=pch_vector, bg=point_fill_color, cex=cex.point)
   
   # add the legend for fill
-  if (!add && !is.null(legendfill.pos) {
+  if (!add && !is.null(legendfill.pos)) {
     labels.u <- levels(fill_factor)
     fills.u <- colors # here we use the colors variable which already sorted by color_order
     legend.text <- as.character(labels.u)
