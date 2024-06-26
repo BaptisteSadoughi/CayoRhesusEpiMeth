@@ -13,12 +13,30 @@ get_palette <- function(n) {
   }
 }
 
+#' @x
+#' @metadata Dataframe containing the entry for fill and shape
+#' @fill Vector used to map the colour fill (continuous or categorical)
+#' @shape Vector used to map the shape (categorical with max 5 levels)
+#' @maintTitle TRUE or FALSE whether or not the plot should have a main title
+#' @main Character entry for the plot main title (if mainTitle is TRUE)
+#' @pad Padding added to the axes range beyond the data range (small numeric e.g. 0.1)
+#' @cex.point Size of the datapoints in cex unit
+#' @add Determines whether to create a new UMAP plot ('add = FALSE') or add data points to an existing plot ('add = TRUE').
+#' @legend.suffix
+#' @cex.main Size of main title in cex unit (if mainTitle is TRUE)
+#' @cex.legend Size of legend key in cex unit
+#' @cex.axisTitle Size of axes titles in cex unit
+#' @ cex.axisText Size of axes text in cex unit
+#' @ legendfill.pos NULL or "left" "right" etc. to place legend fill key 
+#' @ legendshape.pos NULL or "left" "right" etc. to place legend shape key 
+#' @ box TRUE or FALSE whether a full 4-edges box should appear around the plot
+#' @ color_order Character vector used to order the levels of a categorical predictor (ordering should also be applied to the predictor in the metadata itself)
 plot.umap = function(x, metadata, fill, shape = NULL,
                      mainTitle=TRUE,
                      main="A UMAP visualization of the dataset",
                      pad=0.1, cex.point=0.6, add=FALSE, legend.suffix="",
                      cex.main=1, cex.legend=0.85, cex.axisTitle=1, cex.axisText=1,
-                     legendfill.pos = "topleft", legendshape.pos="left", box = TRUE) {
+                     legendfill.pos = "topleft", legendshape.pos="left", box = TRUE, color_order = color_order) {
   layout <- x
   if (is(x, "umap")) {
     layout <- x$layout
@@ -44,15 +62,19 @@ plot.umap = function(x, metadata, fill, shape = NULL,
   } else {
     unique(metadata[[fill]])
   }
+  
+  fill_factor <- factor(metadata[[fill]], levels = color_order) #reoder the factor according to color_order
+  
   # if discrete use a discrete palette otherwise if continuous use a continuous palette
   if (is_fill_discrete) {
-    fills <- get_palette(length(levels_fill)) #discrete palette
+    palette <- get_palette(length(levels_fill))
+    colors <- setNames(palette, levels(fill_factor))
+    colors <- colors[color_order]
   } else {
-    fills <- colorRampPalette(brewer.pal(9, "Blues"))(length(levels_fill)) #continuous palette
+    colors <- colorRampPalette(brewer.pal(9, "Blues"))(length(levels_fill)) #continuous palette
   }
-  fill_factor <- factor(metadata[[fill]], levels = levels_fill)
   fill_as_int <- as.integer(fill_factor)
-  point_fill_color <- fills[fill_as_int]
+  point_fill_color <- colors[fill_as_int]
   
   # if shape is set use shape compatible with a fill (max 5 levels)
   if (!is.null(shape)) {
@@ -71,15 +93,9 @@ plot.umap = function(x, metadata, fill, shape = NULL,
          pch=pch_vector, bg=point_fill_color, cex=cex.point)
   
   # add the legend for fill
-  if (!add) {
-    if (is_fill_discrete) {
-      labels.u <- levels(fill_factor)
-      fills.u <- fills
-    } else {
-      labels.u <- levels(fill_factor)
-      fills.u <- fills[order(as.numeric(labels.u))]
-      labels.u <- labels.u[order(as.numeric(labels.u))]
-    }
+  if (!add && !is.null(legendfill.pos) {
+    labels.u <- levels(fill_factor)
+    fills.u <- colors # here we use the colors variable which already sorted by color_order
     legend.text <- as.character(labels.u)
     if (add) {
       legend.pos <- "bottomleft"
@@ -91,7 +107,7 @@ plot.umap = function(x, metadata, fill, shape = NULL,
   }
   
   # add the legend for shape
-  if (!is.null(shape)) {
+  if (!is.null(shape) && !is.null(legendshape.pos)){
     shapes <- unique(metadata[[shape]])
     legend(legendshape.pos, legend = as.character(shapes), pch = shape_pch,
            bty = "n", pt.cex = cex.point, cex = cex.legend)
